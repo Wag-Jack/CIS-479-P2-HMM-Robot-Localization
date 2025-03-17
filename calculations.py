@@ -6,9 +6,9 @@ def evidence_conditional_probability():
     pass
 
 
-def filter():
+def filter(maze):
     pass
 
 
-def prediction():
+def prediction(maze):
     pass
