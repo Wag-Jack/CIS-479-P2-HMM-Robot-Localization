@@ -36,8 +36,7 @@ maze = [[False, False, True, True, False, False, True, True, False],
        [False, False, True, True, True, True, True, True, False],
        [False, False, False, True, False, False, True, False, False]]
 
-open_squares = [(r.index(s), maze.index(r)) for r in maze for s in r if s == True]
-print(open_squares)
+open_squares = [(c, r) for r in range(5) for c in range(9) if maze[r][c] == True]
 
 ma = m.Maze(maze)
 

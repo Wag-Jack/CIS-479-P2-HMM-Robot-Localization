@@ -20,7 +20,7 @@ DRIFT_LEFT = 0.1
 DRIFT_RIGHT = 0.2
 
 
-def transitional_probability(state, maze, evidence):
+def evidence_conditional_probability(state, maze, evidence):
     trans_prob = 1
     
     for d in range(3):
@@ -43,8 +43,11 @@ def transitional_probability(state, maze, evidence):
     return trans_prob
 
 
-def evidence_conditional_probability(state, maze, move):
-    ev_cond_prob = 0
+def transitional_probability(state, maze, move):
+    def check_bounce_or_obstacle(nx, ny):
+        return True if ((nx == -1 or nx == 10) and (ny == -1 or ny == 6)) else True if maze[nx][ny].probability == -1.0 else False
+
+    ev_cond_prob = 1
 
     relative_directions = [EAST, SOUTH, WEST, NORTH]
 
@@ -55,7 +58,7 @@ def evidence_conditional_probability(state, maze, move):
         ny = state[0] + DIRECTIONS[d][0]
 
         #Ensure valid location
-        if check_valid_dim(ny, nx):
+        if check_bounce_or_obstacle(ny, nx):
             #Determine neighbor's location
             neighbor = maze[ny][nx]
             
@@ -71,13 +74,29 @@ def evidence_conditional_probability(state, maze, move):
 
             #Determine what direction the neighbor will be moving
             neighbor_move = relative_directions[dir]
-            
+
+            #Apply probability based on what direction the neighbor is in
+            if neighbor_move == left:
+                ev_cond_prob *= 0.1
+            elif neighbor_move == right:
+                ev_cond_prob *= 0.2
+            else:
+                ev_cond_prob *= 0.7
+
+    return ev_cond_prob
 
 
+def filter(maze, spaces, evidence):
+    for s in spaces:
+        prior = s.probability
+        evp = evidence_conditional_probability(s, maze, evidence)
+        posterior = evp * prior
+        s.probability = posterior
 
-def filter(maze, spaces, senses):
-    pass
 
-
-def prediction(maze, spaces, move):
-    pass
+def prediction(maze, spaces, action):
+    for s in spaces:
+        prior = s.probability
+        tp = transitional_probability(s, maze, action)
+        posterior = tp * prior #sum of tp?
+        s.probability = posterior
