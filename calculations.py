@@ -1,3 +1,4 @@
+import copy
 from maze import ROW, COL
 
 #Directions
@@ -19,7 +20,8 @@ STRAIGHT = 0.7
 DRIFT_LEFT = 0.1
 DRIFT_RIGHT = 0.2
 
-MOVING_PROB = [DRIFT_LEFT, STRAIGHT, DRIFT_RIGHT]
+MOVING_PROB = [DRIFT_RIGHT, DRIFT_LEFT, STRAIGHT]
+RELATIVE_MOVING_PROB = [DRIFT_LEFT, DRIFT_RIGHT, None] #unsure about the None
 
 def check_valid_dim(col, row):
     return True if 0 <= row <= ROW-1 and 0 <= col <= COL-1 else False
@@ -49,15 +51,7 @@ def evidence_conditional_probability(state, maze, evidence):
 
     return ev_cond_prob
 
-"""
-1. Look at surrounding states
-2. Check if border/obstacle or not
-    a. Yes? Add movement * prior of current state.
-    b. No? Add movement * prior of neighbor
-3. Sum all three probabilities and return
-"""
 
-#TODO: Fix transitional probability :)
 def sum_transitional_probability(state, maze, move):
     def is_obstacle(ny, nx):
         #Obstacle = True, No obstacle = False
@@ -73,11 +67,6 @@ def sum_transitional_probability(state, maze, move):
     sum_trans_prob = 0
 
     state_loc = state.get_location()
-
-    relative_directions =  {WEST: EAST,
-                           NORTH: SOUTH,
-                           EAST: WEST,
-                           SOUTH: NORTH}
 
     """
     Relative moving directions
@@ -96,21 +85,30 @@ def sum_transitional_probability(state, maze, move):
     right = DIRECTIONS[r_index] 
     opposite = DIRECTIONS[d]
 
-    moves = [left, opposite, right]
-    #print(moves)
+    moves = [left, right, opposite]
 
-    for action in zip(moves, MOVING_PROB):
+    for action in zip(moves, MOVING_PROB, RELATIVE_MOVING_PROB):
         #print(action)
-        nx = state_loc[1] + relative_directions[action[0]][1]
-        ny = state_loc[0] + relative_directions[action[0]][0]
+        nx = state_loc[1] + action[0][1]
+        ny = state_loc[0] + action[0][0]
         
-        if check_valid_dim(ny, nx):
+        if check_valid_dim(nx, ny):
             neighbor = maze.read_state(ny, nx)
 
             if is_obstacle(ny, nx):
-                sum_trans_prob += action[1] * state.probability
+                #print((action[1], state.probability))
+                if action[0] != opposite:
+                    sum_trans_prob += action[2] * state.probability
             else:
+                #print((action[1], neighbor.probability))
                 sum_trans_prob += action[1] * neighbor.probability
+
+    nx = state_loc[1] + mo[1]
+    ny = state_loc[0] + mo[0]
+    if check_valid_dim(nx, ny):
+        ahead = maze.read_state(ny, nx)
+        if ahead.probability == -1.0:
+            return sum_trans_prob + STRAIGHT * state.probability
 
     return sum_trans_prob
 
@@ -138,9 +136,17 @@ def filter(maze, spaces, evidence):
 
 
 def prediction(maze, spaces, action):
+    temp_prob = list()
+    
     for s in spaces:
         #Access spot in the maze
         curr = maze.read_state(s[0], s[1])
-        curr.probability = sum_transitional_probability(curr, maze, action)
+        #print(curr)
+        temp_prob.append(sum_transitional_probability(curr, maze, action))
+
+    for s in zip(spaces, temp_prob):
+        space = s[0]
+        curr = maze.read_state(space[0], space[1])
+        curr.probability = s[1]
 
     return maze

@@ -17,9 +17,9 @@ import calculations as c
 
 #Direction constants
 WEST = (0,-1)
-NORTH = (1,0)
+NORTH = (-1,0)
 EAST = (0,1)
-SOUTH = (-1,0)
+SOUTH = (1,0)
 
 #Evidence for HMM
 evidence = [[1,0,1,1], #Z1
@@ -63,13 +63,11 @@ for n in zip(evidence[:-1], actions):
     ma = c.filter(ma, open_squares, ev)
     print(ma)
 
-    
     #Conduction prediction and print maze
     print(f"Prediction after Action {ac}")
     ma = c.prediction(ma, open_squares, ac)
     print(ma)
     
-
 #Do the last filtering and print out the final maze
 print(f"Filtering after Evidence {ev}")
 ma = c.filter(ma, open_squares, evidence[5])
