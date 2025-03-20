@@ -53,10 +53,6 @@ ma = m.Maze(maze)
 print("Initial Location Probabilities")
 print(ma)
 
-ma = c.filter(ma, open_squares, evidence[0])
-print(ma)
-
-"""
 for n in zip(evidence[:-1], actions):
     #Evidence and Action respectively
     ev = n[0]
@@ -78,4 +74,3 @@ for n in zip(evidence[:-1], actions):
 print(f"Filtering after Evidence {ev}")
 ma = c.filter(ma, open_squares, evidence[5])
 print(ma)
-"""
