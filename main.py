@@ -15,19 +15,21 @@ S6 -> Z6 [0, 0, 0, 0]
 import maze as m
 import calculations as c
 
-#Directions
+#Direction constants
 WEST = (0,-1)
 NORTH = (1,0)
 EAST = (0,1)
 SOUTH = (-1,0)
 
-evidence = [[1,0,1,1],
-          [0,0,1,1],
-          [0,0,0,1],
-          [0,1,0,0],
-          [0,0,0,0],
-          [0,0,0,0]]
+#Evidence for HMM
+evidence = [[1,0,1,1], #Z1
+          [0,0,1,1],   #Z2
+          [0,0,0,1],   #Z3
+          [0,1,0,0],   #Z4
+          [0,0,0,0],   #Z5
+          [0,0,0,0]]   #Z6
 
+#Actions to go between the states
 actions = [NORTH, EAST, NORTH, WEST, SOUTH]
 
 maze = [[False, False, True, True, False, False, True, True, False],
@@ -36,9 +38,13 @@ maze = [[False, False, True, True, False, False, True, True, False],
        [False, False, True, True, True, True, True, True, False],
        [False, False, False, True, False, False, True, False, False]]
 
-open_squares = [(c, r) for r in range(5) for c in range(9) if maze[r][c] == True]
+open_squares = [(c, r) for r in range(m.ROW) for c in range(m.COL) if maze[r][c] == True]
 
+#Initialize and print inital maze
 ma = m.Maze(maze)
+print("Initial Location Probabilities")
+print(ma)
+
 
 for n in zip(evidence[:-1], actions):
     #Evidence and Action respectively
@@ -46,16 +52,16 @@ for n in zip(evidence[:-1], actions):
     ac = n[1]
     
     #Conduct filtering and print maze
-    ma = c.filter(ma, open_squares, ev)
     print(f"Filtering after Evidence {ev}")
+    ma = c.filter(ma, open_squares, ev)
     print(ma)
 
     #Conduction prediction and print maze
-    ma = c.prediction(ma, open_squares, ac)
     print(f"Prediction after Action {ac}")
+    ma = c.prediction(ma, open_squares, ac)
     print(ma)
 
 #Do the last filtering and print out the final maze
-ma = c.filter(ma, open_squares, evidence[5])
 print(f"Filtering after Evidence {ev}")
+ma = c.filter(ma, open_squares, evidence[5])
 print(ma)

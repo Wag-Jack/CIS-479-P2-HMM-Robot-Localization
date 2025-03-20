@@ -1,4 +1,4 @@
-from maze import check_valid_dim
+from maze import ROW, COL
 
 #Directions
 WEST = (0,-1)
@@ -21,14 +21,20 @@ DRIFT_RIGHT = 0.2
 
 
 def evidence_conditional_probability(state, maze, evidence):
+    def check_valid_dim(row, col):
+        return True if 0 < row < ROW and 0 < col < COL else False
+    
     trans_prob = 1
     
+    state_loc = state.get_location()
+
     for d in range(3):
-        nx = state[1] + DIRECTIONS[d][1]
-        ny = state[0] + DIRECTIONS[d][0]
+        nx = state_loc[1] + DIRECTIONS[d][1]
+        ny = state_loc[0] + DIRECTIONS[d][0]
 
         if check_valid_dim(ny, nx):
-            surrounding = maze[ny][nx]
+            surrounding = maze.read_state(ny, nx)
+
             if evidence[d] == 1: #1 -> obstacle detected
                 if surrounding.probability == -1.0:
                     trans_prob *= DO_OP
@@ -44,23 +50,33 @@ def evidence_conditional_probability(state, maze, evidence):
 
 
 def transitional_probability(state, maze, move):
-    def check_bounce_or_obstacle(nx, ny):
-        return True if ((nx == -1 or nx == 10) and (ny == -1 or ny == 6)) else True if maze[nx][ny].probability == -1.0 else False
+    #TODO: Differentiate between bounce and obstacle
+    def check_bounce_or_obstacle(ny, nx):
+        if (nx == -1 or nx == COL) and (ny == -1 or ny == ROW):
+            return True
+        else:
+            neighbor = maze.read_state(ny, nx)
+            if neighbor.probability == -1:
+                return True
+            else:
+                return False
 
     ev_cond_prob = 1
 
     relative_directions = [EAST, SOUTH, WEST, NORTH]
 
-    for d in DIRECTIONS:
+    state_loc = state.get_location()
 
+    for d in range(3):
         #Get coordinates of neighboring state for each direction
-        nx = state[1] + DIRECTIONS[d][1]
-        ny = state[0] + DIRECTIONS[d][0]
+        nx = state_loc[1] + DIRECTIONS[d][1]
+        ny = state_loc[0] + DIRECTIONS[d][0]
+        print((ny, nx))
 
         #Ensure valid location
         if check_bounce_or_obstacle(ny, nx):
             #Determine neighbor's location
-            neighbor = maze[ny][nx]
+            neighbor = maze.read_state(ny, nx)
             
             #Same direction non-obstacle does not add to
             #evidence conditional probability
@@ -68,12 +84,11 @@ def transitional_probability(state, maze, move):
                 pass 
 
             #Determine the left and right directions
-            dir = DIRECTIONS.index(d)
-            left = DIRECTIONS[(dir - 1) % 4]
-            right = DIRECTIONS[(dir + 1) % 4]
+            left = DIRECTIONS[(d - 1) % 4]
+            right = DIRECTIONS[(d + 1) % 4]
 
             #Determine what direction the neighbor will be moving
-            neighbor_move = relative_directions[dir]
+            neighbor_move = relative_directions[d]
 
             #Apply probability based on what direction the neighbor is in
             if neighbor_move == left:
@@ -88,15 +103,25 @@ def transitional_probability(state, maze, move):
 
 def filter(maze, spaces, evidence):
     for s in spaces:
-        prior = s.probability
-        evp = evidence_conditional_probability(s, maze, evidence)
+        #Access spot in the maxe
+        curr = maze.read_state(s[1], s[0])
+        
+        prior = curr.probability
+        evp = evidence_conditional_probability(curr, maze, evidence)
         posterior = evp * prior
-        s.probability = posterior
+        curr.probability = posterior
+
+    return maze
 
 
 def prediction(maze, spaces, action):
     for s in spaces:
-        prior = s.probability
-        tp = transitional_probability(s, maze, action)
+        #Access spot in the maze
+        curr = maze.read_state(s[1], s[0])
+        
+        prior = curr.probability
+        tp = transitional_probability(curr, maze, action)
         posterior = tp * prior #sum of tp?
-        s.probability = posterior
+        curr.probability = posterior
+
+    return maze

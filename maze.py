@@ -1,5 +1,3 @@
-import numpy as np
-
 """
 #### #### 0.00 0.00 #### #### 0.00 0.00 ####
 
@@ -19,6 +17,9 @@ class Location:
     def __init__(self, s, p):
         self.space = (s[1], s[0])
         self.probability = p
+
+    def get_location(self):
+        return self.space
 
 class Maze:
     def __init__(self, m):
@@ -46,15 +47,6 @@ class Maze:
                     output += f'{round_prob} ' #print(f'{round_prob} ', end='')
             output += '\n' #print()
         return output
-
-def check_valid_dim(row, col):
-    return True if 0 < row < ROW and 0 < col < COL else False
-
-maze = ([False, False, True, True, False, False, True, True, False],
-       [False, False, False, True, False, False, True, False, False],
-       [True, True, True, True, True, True, True, True, True],
-       [False, False, True, True, True, True, True, True, False],
-       [False, False, False, True, False, False, True, False, False])
-
-m = Maze(maze)
-print(m)
+    
+    def read_state(self, c, r):
+        return self.maze[c][r]
