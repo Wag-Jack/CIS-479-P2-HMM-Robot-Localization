@@ -2,17 +2,17 @@ from maze import ROW, COL
 
 #Directions
 WEST = (0,-1)
-NORTH = (1,0)
+NORTH = (-1,0)
 EAST = (0,1)
-SOUTH = (-1,0)
+SOUTH = (1,0)
 
 DIRECTIONS = [WEST, NORTH, EAST, SOUTH]
 
 #Sensing Probabilities
-DO_OP = 0.95  #Detect obstacle w/ obstacle present
-NDO_OP = 0.05 #Not detect obstacle w/ obstacle present
-DO_NO = 0.15  #Detect obstacle w/ no obstacle present
-NDO_NO = 0.85 #Not detect obstacle w/ no obstacle present
+TP = 0.95  #Detect obstacle w/ obstacle present (true positive)
+FN = 0.05 #Not detect obstacle w/ obstacle present (false negative)
+FP = 0.15  #Detect obstacle w/ no obstacle present (false positive)
+TN = 0.85 #Not detect obstacle w/ no obstacle present (true negative)
 
 #Moving Probabilities
 STRAIGHT = 0.7
@@ -21,32 +21,49 @@ DRIFT_RIGHT = 0.2
 
 
 def evidence_conditional_probability(state, maze, evidence):
-    def check_valid_dim(row, col):
-        return True if 0 < row < ROW and 0 < col < COL else False
+    def check_valid_dim(col, row):
+        return True if 0 <= row <= ROW-1 and 0 <= col <= COL-1 else False
     
-    trans_prob = 1
+    ev_cond_prob = 1
     
     state_loc = state.get_location()
 
-    for d in range(3):
+    for d in range(4):
         nx = state_loc[1] + DIRECTIONS[d][1]
         ny = state_loc[0] + DIRECTIONS[d][0]
 
-        if check_valid_dim(ny, nx):
+        if check_valid_dim(nx, ny):
             surrounding = maze.read_state(ny, nx)
 
             if evidence[d] == 1: #1 -> obstacle detected
                 if surrounding.probability == -1.0:
-                    trans_prob *= DO_OP
+                    ev_cond_prob *= TP
                 else:
-                    trans_prob *= NDO_OP
+                    ev_cond_prob *= FP
             else: #0 -> obstacle not detected
                 if surrounding.probability != -1.0:
-                    trans_prob *= DO_NO
+                    ev_cond_prob *= TN
                 else:
-                    trans_prob *= NDO_NO
+                    ev_cond_prob *= FN
 
-    return trans_prob
+    return ev_cond_prob
+
+"""
+1. Look at surrounding states
+2. Check if border/obstacle or not
+    a. Yes? Add movement * prior of current state.
+    b. No? Add movement * prior of neighbor
+3. Sum all three probabilities and return
+"""
+
+#TODO: Fix transitional probability :)
+def sum_transitional_probability(state, maze, move):
+    trans_prob = 0
+
+    relative_directions = [EAST,SOUTH,WEST,NORTH]
+
+    state_loc = state.get_location()
+
 
 
 def transitional_probability(state, maze, move):
@@ -71,7 +88,7 @@ def transitional_probability(state, maze, move):
         #Get coordinates of neighboring state for each direction
         nx = state_loc[1] + DIRECTIONS[d][1]
         ny = state_loc[0] + DIRECTIONS[d][0]
-        print((ny, nx))
+        #print((ny, nx))
 
         #Ensure valid location
         if check_bounce_or_obstacle(ny, nx):
@@ -100,16 +117,24 @@ def transitional_probability(state, maze, move):
 
     return ev_cond_prob
 
-
 def filter(maze, spaces, evidence):
+    normalization_constant = 0
+    
     for s in spaces:
         #Access spot in the maxe
-        curr = maze.read_state(s[1], s[0])
+        curr = maze.read_state(s[0], s[1])
         
         prior = curr.probability
         evp = evidence_conditional_probability(curr, maze, evidence)
         posterior = evp * prior
+
         curr.probability = posterior
+
+        normalization_constant += posterior
+            
+    for s in spaces:
+        curr = maze.read_state(s[0], s[1])
+        curr.probability /= normalization_constant
 
     return maze
 
@@ -117,7 +142,7 @@ def filter(maze, spaces, evidence):
 def prediction(maze, spaces, action):
     for s in spaces:
         #Access spot in the maze
-        curr = maze.read_state(s[1], s[0])
+        curr = maze.read_state(s[0], s[1])
         
         prior = curr.probability
         tp = transitional_probability(curr, maze, action)

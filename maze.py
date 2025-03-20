@@ -1,22 +1,27 @@
 """
-#### #### 0.00 0.00 #### #### 0.00 0.00 ####
+     |||| |||| |||| |||| |||| |||| |||| |||| ||||
+|||| #### #### 0.00 0.00 #### #### 0.00 0.00 #### ||||
 
-#### #### #### 0.00 #### #### 0.00 #### ####
+|||| #### #### #### 0.00 #### #### 0.00 #### #### ||||
 
-0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00
+|||| 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 0.00 ||||
 
-#### #### 0.00 0.00 0.00 0.00 0.00 0.00 ####
+|||| #### #### 0.00 0.00 0.00 0.00 0.00 0.00 #### ||||
 
-#### #### #### 0.00 #### #### 0.00 #### ####
+|||| #### #### #### 0.00 #### #### 0.00 #### #### ||||
+     |||| |||| |||| |||| |||| |||| |||| |||| ||||
 """
 
-ROW = 5
-COL = 9
+ROW = 7
+COL = 11
 
 class Location:
     def __init__(self, s, p):
-        self.space = (s[1], s[0])
+        self.space = (s[0], s[1])
         self.probability = p
+
+    def __str__(self):
+        return f'{self.space}'
 
     def get_location(self):
         return self.space
@@ -27,26 +32,27 @@ class Maze:
         for r in range(ROW):
             temp = list()
             for c in range(COL):
+
                 if m[r][c]:
-                    temp.append(Location((c, r), 4.35))
+                    temp.append(Location((r, c), 0.0435))
                 else:
-                    temp.append(Location((c, r), -1.0))
+                    temp.append(Location((r, c), -1.0))
             self.maze.append(temp)
 
     def __str__(self):
         output = ''
-        for r in range(ROW):
-            for c in range(COL):
+        for r in range(1,ROW-1):
+            for c in range(1,COL-1):
                 prob = self.maze[r][c].probability
                 if prob == -1.0:
-                    output += ' XXXX ' #print(' XXXX ', end='')
-                else:
-                    round_prob = round(prob, 2)
+                    output += ' #### ' 
+                elif prob != None:
+                    round_prob = round(prob, 4) * 100
                     if round_prob < 10.00:
-                        output += ' ' #print(' ', end='')
-                    output += f'{round_prob} ' #print(f'{round_prob} ', end='')
-            output += '\n' #print()
+                        output += ' ' 
+                    output += f'{round_prob:.2f} '
+            output += '\n'
         return output
     
-    def read_state(self, c, r):
-        return self.maze[c][r]
+    def read_state(self, r, c):
+        return self.maze[r][c]

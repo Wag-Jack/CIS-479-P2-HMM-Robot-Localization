@@ -32,36 +32,50 @@ evidence = [[1,0,1,1], #Z1
 #Actions to go between the states
 actions = [NORTH, EAST, NORTH, WEST, SOUTH]
 
-maze = [[False, False, True, True, False, False, True, True, False],
-       [False, False, False, True, False, False, True, False, False],
-       [True, True, True, True, True, True, True, True, True],
-       [False, False, True, True, True, True, True, True, False],
-       [False, False, False, True, False, False, True, False, False]]
+directions = {WEST: "W",
+              NORTH: "N",
+              EAST: "E",
+              SOUTH: "S"}
 
-open_squares = [(c, r) for r in range(m.ROW) for c in range(m.COL) if maze[r][c] == True]
+maze = [[False, False, False, False, False, False, False, False, False, False, False],
+        [False, False, False,  True,  True, False, False,  True,  True, False, False],
+        [False, False, False, False,  True, False, False,  True, False, False, False],
+        [False,  True,  True,  True,  True,  True,  True,  True,  True,  True, False],
+        [False, False, False,  True,  True,  True,  True,  True,  True, False, False],
+        [False, False, False, False,  True, False, False,  True, False, False, False],
+        [False, False, False, False, False, False, False, False, False, False, False]]
+
+open_squares = [(r, c) for r in range(m.ROW) for c in range(m.COL) if maze[r][c] == True]
+print(open_squares)
 
 #Initialize and print inital maze
 ma = m.Maze(maze)
 print("Initial Location Probabilities")
 print(ma)
 
+ma = c.filter(ma, open_squares, evidence[0])
+print(ma)
 
+"""
 for n in zip(evidence[:-1], actions):
     #Evidence and Action respectively
     ev = n[0]
-    ac = n[1]
+    ac = directions[n[1]]
     
     #Conduct filtering and print maze
     print(f"Filtering after Evidence {ev}")
     ma = c.filter(ma, open_squares, ev)
     print(ma)
 
+    
     #Conduction prediction and print maze
     print(f"Prediction after Action {ac}")
     ma = c.prediction(ma, open_squares, ac)
     print(ma)
+    
 
 #Do the last filtering and print out the final maze
 print(f"Filtering after Evidence {ev}")
 ma = c.filter(ma, open_squares, evidence[5])
 print(ma)
+"""
